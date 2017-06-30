@@ -323,5 +323,223 @@
 		return result;
 	}
 
-	//
+	_min = function (obj, iteratee, context){
+		var result = Infinity, lastComputed = Infinity, value, computed;
+
+		if( iteratee == null && obj!=null ){
+			obj = isArrayLike(obj)?obj:_.values(obj);
+			for(var i=0, length=obj.length; i<length; i++){
+				value = obj[i];
+				if( value<result ){
+					result = value;
+				}
+			}
+		}else{
+			iteratee = cb(iteratee, context);
+
+			_.each(obj, function (value, index, list){
+				computed = iteratee(value, index, list);
+				if(computed<lastComputed || computed===Infinity&&result===Infinity){
+					result = value;
+					lastComputed = computed;
+				}
+			})
+		}
+
+		return result;
+	}
+
+	_.shuffle = function (obj){
+		var set = isArrayLike(obj)?obj:_.values(obj);
+		var length = set.length;
+
+		var shuffled = Array(length);
+
+		for(var index =0, rand; index<length; index++){
+			rand = _.random(0, index);
+			if(rand!==index) shuffled[index]=shuffled[rand];
+			shuffled[rand] = set[index];
+		}
+
+		return shuffled;
+	}
+
+	_.sample = function (obj, n, guard){
+		if(n==null || guard){
+			if(!isArrayLike(obj)) obj = _.values(obj);
+			return obj[_.random(obj.length-1)];
+		}
+
+		return _.shuffle(obj).slice(0, Math.max(0,n));
+	};
+
+	_.sortBy = function (obj, iteratee, context){
+		iteratee = cb(iteratee, context);
+
+		return _.pluck(
+			_.map(obj, function (value, index, list){
+				return {
+					value: value,
+					index: index,
+					criteria: iteratee(value, index, list)
+				}
+			}).sort(function (left, right){
+				var a = left.criteria;
+				var b = right.criteria;
+
+				if(a!==b){
+					if(a>b||a===void 0) return 1;
+					if(a<b||b===void 0) return -1;
+				}
+				return left.index - right.index;
+			}), 'value'
+		);
+	}
+
+	var group = function (behavior){
+		return function (obj, iteratee, context){
+			var result = {};
+
+			iteratee = cb(iteratee, context);
+
+			_.each(obj, function (value, index){
+				var key = iteratee(value, index, obj);
+
+				behavior(result, value, key);
+			})
+
+			return result;
+		}
+	};
+
+	_.groupBy = group(function (result, value, key){
+		if(_.has(result, key))
+			result[key].push(value);
+		else{
+			result[key] = [value];
+		}
+	})
+
+	_.indexBy = group(function (result, value, key){
+		result[key] = value;
+	})
+
+	_.countBy = group(function (result, value, key){
+		if(_.has(result,key)){
+			result[key]++;
+		}else{
+			result[key] = 1;
+		}
+	});
+
+	_.toArray = function (obj){
+		if(!obj) return [];
+
+		if(_.isArray(obj)) return slice.call(obj);
+
+		if(isArrayLike(obj)) return _.map(obj, _.identity);
+
+		return _.values(obj);
+	}
+
+	_.size = function (obj){
+		if(obj==null) return 0;
+		return isArrayLike(obj)?obj.length:_.keys(obj).length;
+	};
+
+	_.partition = function (obj, predicate, context){
+		predicate = cb(predicate, context);
+		var pass = [], fail = [];
+
+		_.each(obj, function (value, key, obj){
+			(predicate(value, key, obj)?pass:fail).push(value);
+		})
+
+		return [pass, fail];
+	}
+
+	_.first = _.head = _.take = function (array, n, guard){
+		if(array == null){
+			return void 0;
+		}
+
+		if(n==null||guard){
+			return array[0];
+		}
+
+		return _.initial(array,array.length -n);
+	};
+
+	_.initial = function (array, n, guard){
+		return slice.call(array, 0, Math.max(0, array.length-(n==null||guard?1:n)));
+	}
+
+	_.last = function (array, n, guard){
+		if( array == null ){
+			return void 0;
+		}
+
+		if(n==null||guard){
+			return array[array.length-1];
+		}
+
+		return _.rest(array, Math.max(0, array.length-n));
+	}
+
+	_.rest = _.tail = _.drop = function (array, n, guard){
+		return slice.call(array, n==null||guard?1:n);
+	}
+
+	_.compact = function (array){
+		return _.filter(array, _.identity);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	_.each(['concat', 'join', 'slice'], function (name){
+		var method = ArrayProto[name];
+		_.prototype[name] = function (){
+			return result(this, method.apply(this._wrapped, arguments));
+		}
+	})
+
+	_.prototype.value = function (){
+		return this._wrapped;
+	}
+
+	_.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
+
+	_.prototype.toString = function (){
+		return ''+this._wrapped;
+	}
+
+	if(typeof define === 'function'&&define.amd){
+		define('underscore', [], function (){
+			return _;
+		})
+	}
 }.call(this));
