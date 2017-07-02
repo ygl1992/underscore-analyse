@@ -494,10 +494,134 @@
 		return _.filter(array, _.identity);
 	}
 
+	var flatten = function (input, shallow, strict, startIndex){
+		var output = [], idx = 0;
 
+		for(var i=startIndex||0, length = getLength(input); i<length; i++){
+			var value = input[i];
 
+			if(isArrayLike(value) && (_.isArray(value) || _.isArguments(value))){
+				if(!shallow){
+					value = flatten(value, shallow, strict);
+				}
 
+				var j = 0,len = value.length;
 
+				output.length += len;
+
+				while(j<len){
+					output[idx++] = value[j++];
+				}
+			}else if(!strict){
+				output[idx++] = value;
+			}
+		}
+
+		return output;
+	}
+
+	_.flatten = function (array, shallow){
+		return flatten(array, shallow, false);
+	}
+
+	_.without = function (){
+		return _.difference(array, slice.call(arguments, 1));
+	}
+
+	_.uniq = _.unique = function (array, isSorted, iteratee, context){
+		if(!_.isBoolean(isSorted)){
+			context = iteratee;
+			iteratee = isSorted;
+			isSorted = false;
+		}
+
+		if(iteratee!=null)
+			iteratee = cb(iteratee, context);
+
+		var result = [];
+
+		var seen = [];
+
+		for(var i=0, length=getLength(array); i<length; i++){
+			var value = array[i];
+			var computed = iteratee?iteratee(value, i, array):value;
+
+			if(isSorted){
+				if(!i||seen!==computed)
+					result.push(value);
+				seen = computed;
+			}else if(!_.contains(result, value)){
+				result.push(value);
+			}
+		}
+
+		return result;
+	}
+
+	_.union = function (){
+		return _.uniq(flatten(arguments, true, true));
+	}
+
+	_.intersection = function (array){
+		var result = [];
+
+		var arglLength = arguments.length;
+
+		for(var i=0, length=getLength(array); i<length; i++){
+			var item = array[i];
+
+			if(_.contains(result, item)) continue;
+
+			for(var j=1; j<argsLength; j++){
+				if(!_.contains(arguments[j], item))
+					break;
+			}
+
+			if(j===argsLength)
+				result.push(item);
+		}
+		return result;
+	}
+
+	_.difference = function (array){
+		var rest = flatten(arguments, true, true, 1);
+
+		return _.filter(array, function (value){
+			return !_.contains(rest, value);
+		})
+	}
+
+	_.zip = function (){
+		return _.unzip(arguments);
+	};
+
+	_.unzip = function (array){
+		var length = array && _.max(array, getLength).length || 0;
+		var result = Array(length);
+
+		for(var index=0; index<length; index++){
+			result[index] = _.pluck(array, index);
+		}
+		return result;
+	}
+
+	_.object = function (list, values){
+		var result = {};
+		for(var i=0, length = getLength(list); i<length; i++){
+			if(values){
+				result[list[i]] = values[i];
+			}else{
+				result[list[i][0]] = list[i][1];
+			}
+		}
+		return result;
+	}
+
+	function createPredicateIndexFinder(dir){
+		return function (array, predicate, context){
+			
+		}
+	}
 
 
 
